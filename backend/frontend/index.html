@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UnitedHighlands SocietyHub — Society Management</title>
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    rel="stylesheet"
+  />
+  <link href="css/style.css" rel="stylesheet" />
+</head>
+<body>
+  <!-- Auth view -->
+  <div id="auth-view" class="auth-wrap">
+    <div class="auth-card shadow-lg">
+      <div class="text-center mb-4">
+        <div class="brand-badge"><i class="bi bi-buildings"></i></div>
+        <h3 class="mt-2 mb-0 fw-bold" data-app-name>SocietyHub</h3>
+        <p class="text-muted small">Apartment Society Management</p>
+      </div>
+
+      <ul class="nav nav-pills nav-fill mb-3" id="authTabs">
+        <li class="nav-item"><button class="nav-link active" data-auth-tab="login">Login</button></li>
+        <li class="nav-item"><button class="nav-link" data-auth-tab="signup">Sign up</button></li>
+      </ul>
+
+      <div id="alert-box"></div>
+
+      <!-- LOGIN -->
+      <form id="login-form" class="auth-pane">
+        <div class="mb-3">
+          <label class="form-label">Mobile number</label>
+          <input type="tel" class="form-control" name="mobile" placeholder="+91XXXXXXXXXX" required />
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Password</label>
+          <input type="password" class="form-control" name="password" required />
+        </div>
+        <button class="btn btn-primary w-100" type="submit">Login</button>
+        <div class="text-center mt-3">
+          <a href="#" id="show-otp-login" class="small">Login with OTP instead</a>
+        </div>
+      </form>
+
+      <!-- OTP LOGIN -->
+      <form id="otp-login-form" class="auth-pane d-none">
+        <div class="mb-3">
+          <label class="form-label">Mobile number</label>
+          <div class="input-group">
+            <input type="tel" class="form-control" name="mobile" placeholder="+91XXXXXXXXXX" required />
+            <button class="btn btn-outline-secondary" type="button" data-send-otp="login">Send OTP</button>
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Enter OTP</label>
+          <input type="text" class="form-control" name="otp" inputmode="numeric" required />
+        </div>
+        <button class="btn btn-primary w-100" type="submit">Verify & Login</button>
+        <div class="text-center mt-3">
+          <a href="#" id="show-password-login" class="small">Login with password instead</a>
+        </div>
+      </form>
+
+      <!-- SIGNUP -->
+      <form id="signup-form" class="auth-pane d-none">
+        <div class="btn-group w-100 mb-3" role="group">
+          <input type="radio" class="btn-check" name="role" id="role-member" value="member" checked />
+          <label class="btn btn-outline-primary" for="role-member">Flat Member</label>
+          <input type="radio" class="btn-check" name="role" id="role-manager" value="manager" />
+          <label class="btn btn-outline-primary" for="role-manager">Society Manager</label>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Full name</label>
+          <input type="text" class="form-control" name="name" required />
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Mobile number</label>
+          <div class="input-group">
+            <input type="tel" class="form-control" name="mobile" placeholder="+91XXXXXXXXXX" required />
+            <button class="btn btn-outline-secondary" type="button" data-send-otp="signup">Send OTP</button>
+          </div>
+        </div>
+        <div class="mb-3" id="flat-field">
+          <label class="form-label">Flat number <span class="text-muted small">(one registration per flat)</span></label>
+          <input type="text" class="form-control" name="flat_no" placeholder="e.g. A-101" />
+        </div>
+        <div class="mb-3">
+          <label class="form-label">OTP</label>
+          <input type="text" class="form-control" name="otp" inputmode="numeric" required />
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Password <span class="text-muted small">(min 8 characters)</span></label>
+          <input type="password" class="form-control" name="password" minlength="8" required />
+        </div>
+        <button class="btn btn-primary w-100" type="submit">Create account</button>
+        <p class="text-muted small mt-3 mb-0" id="signup-note"></p>
+      </form>
+    </div>
+  </div>
+
+  <!-- App view -->
+  <div id="app-view" class="d-none">
+    <nav class="navbar navbar-dark app-navbar px-3">
+      <span class="navbar-brand fw-bold"><i class="bi bi-buildings me-2"></i><span data-app-name>SocietyHub</span></span>
+      <div class="d-flex align-items-center text-white gap-3">
+        <span class="small d-none d-sm-inline" id="user-badge"></span>
+        <button class="btn btn-sm btn-outline-light" id="logout-btn">
+          <i class="bi bi-box-arrow-right"></i> Logout
+        </button>
+      </div>
+    </nav>
+
+    <div class="app-body">
+      <aside class="app-sidebar">
+        <ul class="nav flex-column" id="nav-menu"></ul>
+      </aside>
+      <main class="app-main">
+        <div id="page-alert"></div>
+        <div id="page-content"></div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Generic modal -->
+  <div class="modal fade" id="app-modal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content" id="app-modal-content"></div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

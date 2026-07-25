@@ -1,0 +1,45 @@
+# SocietyHub — production stack for Google Cloud e2-micro (Always Free)
+# app  : FastAPI served by Gunicorn/Uvicorn
+# caddy: reverse proxy that AUTOMATICALLY provisions free HTTPS (Let's Encrypt)
+#
+# Usage:
+#   1. Put your real values in backend/.env  (SECRET_KEY, admin password, APP_NAME…)
+#   2. Set DOMAIN below (a real domain or a free DuckDNS subdomain) for HTTPS,
+#      or leave it as :80 to serve plain HTTP by IP.
+#   3. docker compose up -d --build
+
+services:
+  app:
+    build: ./backend
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      # Persist the SQLite DB on a named volume (survives restarts/redeploys)
+      DATABASE_URL: sqlite:////data/societyhub.db
+    volumes:
+      - societyhub_data:/data
+    expose:
+      - "8000"
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - app
+    environment:
+      # Set to your domain, e.g. unitedhighlands-societyhub.duckdns.org
+      # Leave as ":80" for HTTP-only access by IP address.
+      DOMAIN: ${DOMAIN:-:80}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  societyhub_data:
+  caddy_data:
+  caddy_config:

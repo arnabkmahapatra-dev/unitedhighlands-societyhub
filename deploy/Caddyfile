@@ -1,0 +1,8 @@
+# Caddy reverse proxy for SocietyHub.
+# {$DOMAIN} is provided by docker-compose:
+#   - a real domain / DuckDNS subdomain  -> automatic free HTTPS (Let's Encrypt)
+#   - ":80"                              -> plain HTTP access by IP address
+{$DOMAIN} {
+	encode gzip
+	reverse_proxy app:8000
+}

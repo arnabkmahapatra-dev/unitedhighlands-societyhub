@@ -1,0 +1,39 @@
+# Render blueprint for UnitedHighlands SocietyHub
+# Docs: https://render.com/docs/blueprint-spec
+#
+# Deploy:
+#   1. Push this repo to GitHub (see chat steps).
+#   2. Render Dashboard -> New -> Blueprint -> pick this repo.
+#   3. Set DATABASE_URL to your free Neon Postgres connection string.
+#
+# The free plan sleeps after ~15 min idle and wakes on the next request.
+services:
+  - type: web
+    name: unitedhighlands-societyhub
+    runtime: docker
+    repo: # optional; Render fills this when you connect the repo
+    plan: free
+    region: singapore # closest free region to India
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true # Render generates a strong secret
+      - key: APP_NAME
+        value: UnitedHighlands SocietyHub
+      - key: REQUIRE_OTP
+        value: "false"
+      - key: SMS_PROVIDER
+        value: console
+      - key: WEB_CONCURRENCY
+        value: "2"
+      - key: DEFAULT_ADMIN_NAME
+        value: IT Support
+      - key: DEFAULT_ADMIN_MOBILE
+        value: "+919999999999" # change after first login
+      - key: DEFAULT_ADMIN_PASSWORD
+        sync: false # set your own secret value in the Render dashboard
+      - key: DATABASE_URL
+        sync: false # paste your Neon Postgres URL in the Render dashboard

@@ -1,0 +1,123 @@
+:root {
+  --sh-primary: #0f5132;
+  --sh-primary-2: #146c43;
+  --sh-accent: #d1e7dd;
+}
+
+body {
+  background: #f4f6f8;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+/* ---------- Auth ---------- */
+.auth-wrap {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: linear-gradient(135deg, #0f5132 0%, #198754 100%);
+}
+.auth-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 2rem;
+  width: 100%;
+  max-width: 420px;
+}
+.brand-badge {
+  width: 60px;
+  height: 60px;
+  border-radius: 16px;
+  background: var(--sh-accent);
+  color: var(--sh-primary);
+  font-size: 1.8rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+#authTabs .nav-link {
+  color: var(--sh-primary);
+}
+#authTabs .nav-link.active {
+  background: var(--sh-primary);
+}
+
+/* ---------- App shell ---------- */
+.app-navbar {
+  background: var(--sh-primary);
+  height: 56px;
+}
+.app-body {
+  display: flex;
+  min-height: calc(100vh - 56px);
+}
+.app-sidebar {
+  width: 230px;
+  background: #fff;
+  border-right: 1px solid #e5e7eb;
+  padding: 1rem 0.5rem;
+  flex-shrink: 0;
+}
+.app-sidebar .nav-link {
+  color: #374151;
+  border-radius: 8px;
+  padding: 0.6rem 0.9rem;
+  margin-bottom: 2px;
+  cursor: pointer;
+}
+.app-sidebar .nav-link:hover {
+  background: #f1f5f9;
+}
+.app-sidebar .nav-link.active {
+  background: var(--sh-primary);
+  color: #fff;
+}
+.app-sidebar .nav-link i {
+  width: 22px;
+}
+.app-main {
+  flex: 1;
+  padding: 1.5rem;
+  overflow-x: auto;
+}
+
+/* ---------- Cards / stats ---------- */
+.stat-card {
+  border: none;
+  border-radius: 14px;
+  color: #fff;
+}
+.stat-card .display-6 {
+  font-weight: 700;
+}
+.stat-credit { background: linear-gradient(135deg, #198754, #20c997); }
+.stat-debit { background: linear-gradient(135deg, #dc3545, #fd7e14); }
+.stat-balance { background: linear-gradient(135deg, #0d6efd, #6610f2); }
+.stat-depts { background: linear-gradient(135deg, #6c757d, #495057); }
+
+.dept-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: var(--sh-accent);
+  color: var(--sh-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card {
+  border: none;
+  border-radius: 14px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.badge-role { text-transform: capitalize; }
+
+@media (max-width: 768px) {
+  .app-sidebar {
+    width: 64px;
+  }
+  .app-sidebar .nav-link span { display: none; }
+}

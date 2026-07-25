@@ -1,0 +1,18 @@
+# Python
+**/__pycache__/
+*.py[cod]
+**/.venv/
+**/venv/
+
+# Secrets & local data
+**/.env
+*.db
+*.sqlite3
+backend/test_*.db
+
+# OS / editor
+.DS_Store
+.idea/
+
+# Local smoke test artifacts
+backend/smoke_test.py
