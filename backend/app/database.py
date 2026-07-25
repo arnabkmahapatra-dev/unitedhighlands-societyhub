@@ -10,6 +10,13 @@ def _normalize_db_url(url: str) -> str:
     # needs the "postgresql://" scheme (with the psycopg2 driver).
     if url.startswith("postgres://"):
         url = url.replace("postgres://", "postgresql://", 1)
+    if not url.startswith(("postgresql://", "sqlite://")):
+        scheme = url.split("://", 1)[0] if "://" in url else url
+        raise ValueError(
+            f"DATABASE_URL has an unsupported scheme: {scheme!r}. "
+            "Use a 'postgresql://...' connection string (e.g. from Neon) "
+            "or a 'sqlite://...' path."
+        )
     return url
 
 
