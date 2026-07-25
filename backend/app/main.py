@@ -8,9 +8,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from .config import settings
-from .database import Base, SessionLocal, engine
+from .database import init_db
 from .routers import auth, broadcasts, dashboard, departments, transactions, users
-from .seed import run_seed
 
 logging.basicConfig(level=logging.INFO)
 
@@ -19,12 +18,7 @@ FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    Base.metadata.create_all(bind=engine)
-    db = SessionLocal()
-    try:
-        run_seed(db)
-    finally:
-        db.close()
+    init_db()
     yield
 
 
