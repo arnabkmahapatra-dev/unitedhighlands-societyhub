@@ -47,10 +47,13 @@ body {
   justify-content: center;
 }
 #authTabs .nav-link {
-  color: var(--sh-primary);
+  color: #fff;
+  font-weight: 700;
+  background: var(--sh-primary-2);
 }
 #authTabs .nav-link.active {
   background: var(--sh-primary);
+  color: #fff;
 }
 
 /* ---------- App shell ---------- */
