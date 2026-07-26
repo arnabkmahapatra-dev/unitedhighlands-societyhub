@@ -1,5 +1,5 @@
 """Pydantic request/response schemas (Python 3.9 compatible typing)."""
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 from typing import List, Optional
 
@@ -122,6 +122,21 @@ class TransactionCreate(BaseModel):
     comment: Optional[str] = None
 
 
+class MaintenanceCollectionCreate(BaseModel):
+    department_id: int
+    flat_no: str = Field(..., min_length=1, max_length=30)
+    period_month: str = Field(..., pattern=r"^\d{4}-\d{2}$")  # YYYY-MM
+    maintenance_amount: Decimal = Field(..., ge=0)
+    water_bill: Decimal = Field(Decimal("0"), ge=0)
+    payment_done: Decimal = Field(..., ge=0)
+    payment_date: date
+
+    @field_validator("flat_no")
+    @classmethod
+    def strip_flat(cls, v: str) -> str:
+        return v.strip().upper()
+
+
 class TransactionOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -133,6 +148,12 @@ class TransactionOut(BaseModel):
     amount: float
     source: Optional[str] = None
     comment: Optional[str] = None
+    flat_no: Optional[str] = None
+    period_month: Optional[str] = None
+    maintenance_amount: Optional[float] = None
+    water_bill: Optional[float] = None
+    due_advance: Optional[float] = None
+    payment_date: Optional[date] = None
     created_by_id: int
     created_by_name: Optional[str] = None
     created_at: datetime

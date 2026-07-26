@@ -8,9 +8,12 @@ from sqlalchemy.orm import Session, joinedload
 from ..database import get_db
 from ..deps import get_current_user, require_manager
 from ..models import Department, Transaction, TransactionType, User, UserRole
-from ..schemas import TransactionCreate, TransactionOut
+from ..schemas import MaintenanceCollectionCreate, TransactionCreate, TransactionOut
 
 router = APIRouter(prefix="/api/transactions", tags=["transactions"])
+
+# Department that uses the specialized per-flat maintenance collection form.
+MAINTENANCE_DEPT_NAME = "Maintenance Collection"
 
 
 def _serialize(txn: Transaction) -> TransactionOut:
@@ -23,6 +26,14 @@ def _serialize(txn: Transaction) -> TransactionOut:
         amount=float(txn.amount),
         source=txn.source,
         comment=txn.comment,
+        flat_no=txn.flat_no,
+        period_month=txn.period_month,
+        maintenance_amount=float(txn.maintenance_amount)
+        if txn.maintenance_amount is not None
+        else None,
+        water_bill=float(txn.water_bill) if txn.water_bill is not None else None,
+        due_advance=float(txn.due_advance) if txn.due_advance is not None else None,
+        payment_date=txn.payment_date,
         created_by_id=txn.created_by_id,
         created_by_name=txn.created_by.name if txn.created_by else None,
         created_at=txn.created_at,
@@ -77,6 +88,53 @@ def create_transaction(
         amount=payload.amount,
         source=payload.source.strip() if payload.source else None,
         comment=payload.comment,
+        created_by_id=current.id,
+    )
+    db.add(txn)
+    db.commit()
+    db.refresh(txn)
+    return _serialize(txn)
+
+
+@router.post("/maintenance", response_model=TransactionOut, status_code=201)
+def create_maintenance_collection(
+    payload: MaintenanceCollectionCreate,
+    db: Session = Depends(get_db),
+    current: User = Depends(require_manager),
+):
+    dept = db.get(Department, payload.department_id)
+    if dept is None or not dept.is_active:
+        raise HTTPException(status_code=404, detail="Department not found or inactive.")
+    if dept.name != MAINTENANCE_DEPT_NAME:
+        raise HTTPException(
+            status_code=400,
+            detail=f"This form is only for the '{MAINTENANCE_DEPT_NAME}' department.",
+        )
+
+    # Managers may only post to departments assigned to them.
+    if current.role == UserRole.manager:
+        assigned_ids = {d.id for d in current.departments}
+        if payload.department_id not in assigned_ids:
+            raise HTTPException(
+                status_code=403,
+                detail="You are not assigned to this department.",
+            )
+
+    # Due (+) or Advance (-) relative to what was collected.
+    due_advance = (
+        payload.maintenance_amount + payload.water_bill - payload.payment_done
+    )
+    txn = Transaction(
+        department_id=payload.department_id,
+        type=TransactionType.credit,
+        title=f"Maintenance — {payload.flat_no} — {payload.period_month}",
+        amount=payload.payment_done,
+        flat_no=payload.flat_no,
+        period_month=payload.period_month,
+        maintenance_amount=payload.maintenance_amount,
+        water_bill=payload.water_bill,
+        due_advance=due_advance,
+        payment_date=payload.payment_date,
         created_by_id=current.id,
     )
     db.add(txn)

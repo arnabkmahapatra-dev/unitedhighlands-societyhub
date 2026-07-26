@@ -161,6 +161,10 @@
     e.preventDefault();
     const f = e.target;
     const role = f.role.value;
+    if (f.password.value !== f.confirm_password.value) {
+      alertBox("#alert-box", "Passwords do not match.");
+      return;
+    }
     const payload = {
       name: f.name.value.trim(),
       mobile: f.mobile.value.trim(),
@@ -488,6 +492,8 @@
   };
 
   // ---------- Transactions logic ----------
+  const MAINT_DEPT_NAME = "Maintenance Collection";
+
   async function loadTxns() {
     const dept = $("#filter-dept")?.value;
     const type = $("#filter-type")?.value;
@@ -512,6 +518,18 @@
           }">${t.type}</span></td>
           <td>${esc(t.title)}${
           t.source ? `<div class="small text-muted">Source: ${esc(t.source)}</div>` : ""
+        }${
+          t.due_advance != null
+            ? `<div class="small ${
+                t.due_advance > 0 ? "text-danger" : t.due_advance < 0 ? "text-success" : "text-muted"
+              }">${
+                t.due_advance > 0
+                  ? "Due: " + money(t.due_advance)
+                  : t.due_advance < 0
+                  ? "Advance: " + money(Math.abs(t.due_advance))
+                  : "Settled"
+              }</div>`
+            : ""
         }${t.comment ? `<div class="small text-secondary">${esc(t.comment)}</div>` : ""}</td>
           <td class="text-end fw-semibold ${
             t.type === "credit" ? "text-success" : "text-danger"
@@ -550,54 +568,146 @@
           (ME.role === "manager" ? "Ask IT Support to assign you a department." : "Create a department first.")
       );
     }
+    const maintDept = depts.find((d) => d.name === MAINT_DEPT_NAME);
     const opts = depts.map((d) => `<option value="${d.id}">${esc(d.name)}</option>`).join("");
     showModal(
       "Add Transaction",
       `<form id="txn-form">
         <div id="txn-alert"></div>
         <div class="mb-3">
-          <label class="form-label">Type</label>
-          <div class="btn-group w-100">
-            <input type="radio" class="btn-check" name="type" id="t-debit" value="debit" checked>
-            <label class="btn btn-outline-danger" for="t-debit">Debit (Expense)</label>
-            <input type="radio" class="btn-check" name="type" id="t-credit" value="credit">
-            <label class="btn btn-outline-success" for="t-credit">Credit (Income)</label>
-          </div>
-        </div>
-        <div class="mb-3">
           <label class="form-label">Department</label>
           <select class="form-select" name="department_id" required>${opts}</select>
         </div>
-        <div class="mb-3">
-          <label class="form-label">Item / Purpose</label>
-          <input class="form-control" name="title" required placeholder="e.g. Security salary, Diesel purchase">
+
+        <!-- Standard entry fields -->
+        <div id="normal-fields">
+          <div class="mb-3">
+            <label class="form-label">Type</label>
+            <div class="btn-group w-100">
+              <input type="radio" class="btn-check" name="type" id="t-debit" value="debit" checked>
+              <label class="btn btn-outline-danger" for="t-debit">Debit (Expense)</label>
+              <input type="radio" class="btn-check" name="type" id="t-credit" value="credit">
+              <label class="btn btn-outline-success" for="t-credit">Credit (Income)</label>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Item / Purpose</label>
+            <input class="form-control" name="title" placeholder="e.g. Security salary, Diesel purchase">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Amount (₹)</label>
+            <input type="number" step="0.01" min="0.01" class="form-control" name="amount">
+          </div>
+          <div class="mb-3" id="source-field">
+            <label class="form-label">Source of money <span class="text-muted small">(for credit)</span></label>
+            <input class="form-control" name="source" placeholder="e.g. Maintenance collection, Interest">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Comment</label>
+            <textarea class="form-control" name="comment" rows="2"></textarea>
+          </div>
         </div>
-        <div class="mb-3">
-          <label class="form-label">Amount (₹)</label>
-          <input type="number" step="0.01" min="0.01" class="form-control" name="amount" required>
-        </div>
-        <div class="mb-3" id="source-field">
-          <label class="form-label">Source of money <span class="text-muted small">(for credit)</span></label>
-          <input class="form-control" name="source" placeholder="e.g. Maintenance collection, Interest">
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Comment</label>
-          <textarea class="form-control" name="comment" rows="2"></textarea>
+
+        <!-- Maintenance collection fields -->
+        <div id="maint-fields" class="d-none">
+          <div class="mb-3">
+            <label class="form-label">Flat number</label>
+            <input class="form-control" name="flat_no" placeholder="e.g. A-101">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Month of maintenance</label>
+            <input type="month" class="form-control" name="period_month">
+          </div>
+          <div class="row g-2">
+            <div class="col-6 mb-3">
+              <label class="form-label">Maintenance amount (₹)</label>
+              <input type="number" step="0.01" min="0" class="form-control" name="maintenance_amount">
+            </div>
+            <div class="col-6 mb-3">
+              <label class="form-label">Water bill (₹)</label>
+              <input type="number" step="0.01" min="0" class="form-control" name="water_bill" value="0">
+            </div>
+          </div>
+          <div class="row g-2">
+            <div class="col-6 mb-3">
+              <label class="form-label">Payment done (₹)</label>
+              <input type="number" step="0.01" min="0" class="form-control" name="payment_done">
+            </div>
+            <div class="col-6 mb-3">
+              <label class="form-label">Date of payment</label>
+              <input type="date" class="form-control" name="payment_date">
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Due / Advance amount</label>
+            <input class="form-control fw-semibold" id="due-advance" readonly value="—">
+            <div class="form-text">Auto-calculated: Maintenance + Water bill − Payment done.</div>
+          </div>
         </div>
       </form>`,
       `<button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-       <button class="btn btn-primary" id="save-txn">Save</button>`
+       <button class="btn btn-primary" id="save-txn">Submit</button>`
     );
+
+    const isMaintSelected = () =>
+      maintDept && Number($("#txn-form [name=department_id]").value) === maintDept.id;
 
     const toggleSource = () => {
       const isCredit = $("#txn-form [name=type]:checked").value === "credit";
       $("#source-field").classList.toggle("d-none", !isCredit);
     };
+
+    const recalcDue = () => {
+      const num = (n) => Number($(`#txn-form [name=${n}]`).value || 0);
+      const diff = num("maintenance_amount") + num("water_bill") - num("payment_done");
+      const el = $("#due-advance");
+      if (diff > 0) el.value = `Due ${money(diff)}`;
+      else if (diff < 0) el.value = `Advance ${money(Math.abs(diff))}`;
+      else el.value = `Settled ${money(0)}`;
+    };
+
+    const updateMode = () => {
+      const maint = isMaintSelected();
+      $("#normal-fields").classList.toggle("d-none", maint);
+      $("#maint-fields").classList.toggle("d-none", !maint);
+      if (maint) recalcDue();
+      else toggleSource();
+    };
+
+    $("#txn-form [name=department_id]").addEventListener("change", updateMode);
     $$("#txn-form [name=type]").forEach((r) => r.addEventListener("change", toggleSource));
-    toggleSource();
+    ["maintenance_amount", "water_bill", "payment_done"].forEach((n) =>
+      $(`#txn-form [name=${n}]`).addEventListener("input", recalcDue)
+    );
+    updateMode();
 
     $("#save-txn").addEventListener("click", async () => {
       const f = $("#txn-form");
+      if (isMaintSelected()) {
+        const payload = {
+          department_id: Number(f.department_id.value),
+          flat_no: f.flat_no.value.trim(),
+          period_month: f.period_month.value,
+          maintenance_amount: Number(f.maintenance_amount.value || 0),
+          water_bill: Number(f.water_bill.value || 0),
+          payment_done: Number(f.payment_done.value || 0),
+          payment_date: f.payment_date.value,
+        };
+        if (!payload.flat_no || !payload.period_month || !payload.payment_date)
+          return alertBox("#txn-alert", "Please enter flat number, month and date of payment.");
+        if (!(payload.maintenance_amount >= 0) || !(payload.payment_done >= 0))
+          return alertBox("#txn-alert", "Please enter valid amounts.");
+        try {
+          await API.post("/transactions/maintenance", payload);
+          modal.hide();
+          loadTxns();
+          alertBox("#page-alert", "Maintenance collection recorded.", "success");
+        } catch (e) {
+          alertBox("#txn-alert", e.message);
+        }
+        return;
+      }
+
       const payload = {
         department_id: Number(f.department_id.value),
         type: f.type.value,

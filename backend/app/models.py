@@ -2,12 +2,13 @@
 from __future__ import annotations
 
 import enum
-from datetime import datetime
+from datetime import date, datetime
 from typing import List, Optional
 
 from sqlalchemy import (
     Boolean,
     Column,
+    Date,
     DateTime,
     Enum,
     ForeignKey,
@@ -102,6 +103,14 @@ class Transaction(Base):
     amount: Mapped[float] = mapped_column(Numeric(12, 2), nullable=False)
     source: Mapped[Optional[str]] = mapped_column(String(160), nullable=True)  # money source (credit)
     comment: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+    # Maintenance Collection department only: per-flat collection details.
+    flat_no: Mapped[Optional[str]] = mapped_column(String(30), nullable=True)
+    period_month: Mapped[Optional[str]] = mapped_column(String(7), nullable=True)  # YYYY-MM
+    maintenance_amount: Mapped[Optional[float]] = mapped_column(Numeric(12, 2), nullable=True)
+    water_bill: Mapped[Optional[float]] = mapped_column(Numeric(12, 2), nullable=True)
+    due_advance: Mapped[Optional[float]] = mapped_column(Numeric(12, 2), nullable=True)  # + due, - advance
+    payment_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
 
     created_by_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), index=True)

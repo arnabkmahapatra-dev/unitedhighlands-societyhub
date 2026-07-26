@@ -57,11 +57,42 @@ def _create_and_seed() -> None:
     from .seed import run_seed  # local import avoids a circular import
 
     Base.metadata.create_all(bind=engine)
+    with engine.begin() as conn:
+        _ensure_transaction_columns(conn)
     db = SessionLocal()
     try:
         run_seed(db)
     finally:
         db.close()
+
+
+# Columns added after the first release; create_all won't ALTER existing
+# tables, so we add them idempotently here.
+_TRANSACTION_ADDED_COLUMNS = [
+    ("flat_no", "VARCHAR(30)"),
+    ("period_month", "VARCHAR(7)"),
+    ("maintenance_amount", "NUMERIC(12, 2)"),
+    ("water_bill", "NUMERIC(12, 2)"),
+    ("due_advance", "NUMERIC(12, 2)"),
+    ("payment_date", "DATE"),
+]
+
+
+def _ensure_transaction_columns(conn) -> None:
+    dialect = engine.dialect.name
+    if dialect == "postgresql":
+        for name, ddl in _TRANSACTION_ADDED_COLUMNS:
+            conn.execute(
+                text(f"ALTER TABLE transactions ADD COLUMN IF NOT EXISTS {name} {ddl}")
+            )
+    elif dialect == "sqlite":
+        existing = {
+            row[1]
+            for row in conn.exec_driver_sql("PRAGMA table_info(transactions)").fetchall()
+        }
+        for name, ddl in _TRANSACTION_ADDED_COLUMNS:
+            if name not in existing:
+                conn.exec_driver_sql(f"ALTER TABLE transactions ADD COLUMN {name} {ddl}")
 
 
 def init_db() -> None:
