@@ -9,6 +9,16 @@ body {
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
+/* Light, readable text-selection highlight (was too dark by default). */
+::selection {
+  background: var(--sh-accent);
+  color: var(--sh-primary);
+}
+::-moz-selection {
+  background: var(--sh-accent);
+  color: var(--sh-primary);
+}
+
 /* ---------- Auth ---------- */
 .auth-wrap {
   min-height: 100vh;
