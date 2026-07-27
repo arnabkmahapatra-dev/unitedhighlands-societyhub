@@ -18,6 +18,8 @@ from ..schemas import (
     MessageResponse,
     OtpLoginRequest,
     OtpRequest,
+    PasswordChange,
+    ProfileUpdate,
     Token,
     UserOut,
 )
@@ -205,6 +207,44 @@ def login_otp(payload: OtpLoginRequest, db: Session = Depends(get_db)):
 @router.get("/me", response_model=UserOut)
 def me(current_user: User = Depends(get_current_user)):
     return current_user
+
+
+@router.patch("/me", response_model=UserOut)
+def update_profile(
+    payload: ProfileUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Update the current user's own name and mobile number."""
+    mobile = normalize_mobile(payload.mobile)
+    if mobile != current_user.mobile:
+        clash = db.scalar(
+            select(User).where(User.mobile == mobile, User.id != current_user.id)
+        )
+        if clash is not None:
+            raise HTTPException(
+                status_code=409,
+                detail="An account already exists for this mobile number.",
+            )
+    current_user.name = payload.name.strip()
+    current_user.mobile = mobile
+    db.commit()
+    db.refresh(current_user)
+    return current_user
+
+
+@router.post("/change-password", response_model=MessageResponse)
+def change_password(
+    payload: PasswordChange,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Change the current user's password after verifying the current one."""
+    if not verify_password(payload.current_password, current_user.hashed_password):
+        raise HTTPException(status_code=400, detail="Current password is incorrect.")
+    current_user.hashed_password = hash_password(payload.new_password)
+    db.commit()
+    return {"detail": "Password changed successfully."}
 
 
 @router.get("/me/departments", response_model=list[DepartmentOut])

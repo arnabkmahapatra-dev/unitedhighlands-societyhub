@@ -48,6 +48,16 @@ class OtpLoginRequest(BaseModel):
     otp: str = Field(..., min_length=4, max_length=8)
 
 
+class ProfileUpdate(BaseModel):
+    name: str = Field(..., min_length=2, max_length=120)
+    mobile: str = Field(..., min_length=6, max_length=20)
+
+
+class PasswordChange(BaseModel):
+    current_password: str = Field(..., min_length=1, max_length=128)
+    new_password: str = Field(..., min_length=8, max_length=128)
+
+
 # ---------- Departments ----------
 class DepartmentBase(BaseModel):
     name: str = Field(..., min_length=2, max_length=120)

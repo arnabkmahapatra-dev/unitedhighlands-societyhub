@@ -201,17 +201,20 @@
       ["broadcasts", "Broadcasts", "megaphone"],
       ["departments", "Departments", "diagram-3"],
       ["users", "Users", "people"],
+      ["account", "Account", "person-gear"],
     ],
     manager: [
       ["dashboard", "Dashboard", "speedometer2"],
       ["transactions", "Transactions", "cash-stack"],
       ["broadcasts", "Broadcasts", "megaphone"],
       ["mydepts", "My Departments", "diagram-3"],
+      ["account", "Account", "person-gear"],
     ],
     member: [
       ["dashboard", "Dashboard", "speedometer2"],
       ["transactions", "Transactions", "cash-stack"],
       ["broadcasts", "Broadcasts", "megaphone"],
+      ["account", "Account", "person-gear"],
     ],
   };
 
@@ -489,6 +492,98 @@
       );
       loadUsers("pending");
     },
+  };
+
+  // ---------- Account page (all roles) ----------
+  PAGES.account = async function account() {
+    content().innerHTML = `
+      <h4 class="mb-3">My Account</h4>
+      <div class="row g-3">
+        <div class="col-lg-6">
+          <div class="card p-3 h-100">
+            <h6 class="mb-3"><i class="bi bi-person-vcard me-1"></i>Profile</h6>
+            <div id="profile-alert"></div>
+            <form id="profile-form">
+              <div class="mb-3">
+                <label class="form-label">Full name</label>
+                <input class="form-control" name="name" value="${esc(ME.name)}" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Mobile number</label>
+                <input type="tel" class="form-control" name="mobile" value="${esc(
+                  ME.mobile
+                )}" placeholder="+91XXXXXXXXXX" required>
+              </div>
+              ${
+                ME.flat_no
+                  ? `<div class="mb-3">
+                      <label class="form-label">Flat number</label>
+                      <input class="form-control" value="${esc(ME.flat_no)}" disabled>
+                    </div>`
+                  : ""
+              }
+              <button class="btn btn-primary" type="submit">Save changes</button>
+            </form>
+          </div>
+        </div>
+        <div class="col-lg-6">
+          <div class="card p-3 h-100">
+            <h6 class="mb-3"><i class="bi bi-shield-lock me-1"></i>Change Password</h6>
+            <div id="password-alert"></div>
+            <form id="password-form">
+              <div class="mb-3">
+                <label class="form-label">Current password</label>
+                <input type="password" class="form-control" name="current_password" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">New password <span class="text-muted small">(min 8 characters)</span></label>
+                <input type="password" class="form-control" name="new_password" minlength="8" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Confirm new password</label>
+                <input type="password" class="form-control" name="confirm_password" minlength="8" required>
+              </div>
+              <button class="btn btn-primary" type="submit">Update password</button>
+            </form>
+          </div>
+        </div>
+      </div>`;
+
+    $("#profile-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const f = e.target;
+      try {
+        const updated = await API.patch("/auth/me", {
+          name: f.name.value.trim(),
+          mobile: f.mobile.value.trim(),
+        });
+        ME = updated;
+        API.setSession(null, ME);
+        $("#user-badge").innerHTML = `<i class="bi bi-person-circle me-1"></i>${esc(
+          ME.name
+        )} · ${roleLabel[ME.role]}${ME.flat_no ? " · " + esc(ME.flat_no) : ""}`;
+        alertBox("#profile-alert", "Profile updated.", "success");
+      } catch (err) {
+        alertBox("#profile-alert", err.message);
+      }
+    });
+
+    $("#password-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const f = e.target;
+      if (f.new_password.value !== f.confirm_password.value)
+        return alertBox("#password-alert", "New passwords do not match.");
+      try {
+        await API.post("/auth/change-password", {
+          current_password: f.current_password.value,
+          new_password: f.new_password.value,
+        });
+        f.reset();
+        alertBox("#password-alert", "Password changed successfully.", "success");
+      } catch (err) {
+        alertBox("#password-alert", err.message);
+      }
+    });
   };
 
   // ---------- Transactions logic ----------
