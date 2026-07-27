@@ -570,6 +570,25 @@
     }
     const maintDept = depts.find((d) => d.name === MAINT_DEPT_NAME);
     const opts = depts.map((d) => `<option value="${d.id}">${esc(d.name)}</option>`).join("");
+    // Month/Year dropdowns produce a reliable YYYY-MM (input type=month is not
+    // supported in Safari/older Firefox and falls back to a free-text box).
+    const now = new Date();
+    const curY = now.getFullYear();
+    const curM = String(now.getMonth() + 1).padStart(2, "0");
+    const monthNames = [
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December",
+    ];
+    const monthOptions = monthNames
+      .map((nm, i) => {
+        const v = String(i + 1).padStart(2, "0");
+        return `<option value="${v}" ${v === curM ? "selected" : ""}>${nm}</option>`;
+      })
+      .join("");
+    let yearOptions = "";
+    for (let y = curY + 1; y >= curY - 5; y--) {
+      yearOptions += `<option value="${y}" ${y === curY ? "selected" : ""}>${y}</option>`;
+    }
     showModal(
       "Add Transaction",
       `<form id="txn-form">
@@ -614,9 +633,15 @@
             <label class="form-label">Flat number</label>
             <input class="form-control" name="flat_no" placeholder="e.g. A-101">
           </div>
-          <div class="mb-3">
-            <label class="form-label">Month of maintenance</label>
-            <input type="month" class="form-control" name="period_month">
+          <div class="row g-2">
+            <div class="col-7 mb-3">
+              <label class="form-label">Month of maintenance</label>
+              <select class="form-select" name="period_month_m">${monthOptions}</select>
+            </div>
+            <div class="col-5 mb-3">
+              <label class="form-label">Year</label>
+              <select class="form-select" name="period_month_y">${yearOptions}</select>
+            </div>
           </div>
           <div class="row g-2">
             <div class="col-6 mb-3">
@@ -687,14 +712,14 @@
         const payload = {
           department_id: Number(f.department_id.value),
           flat_no: f.flat_no.value.trim(),
-          period_month: f.period_month.value,
+          period_month: `${f.period_month_y.value}-${f.period_month_m.value}`,
           maintenance_amount: Number(f.maintenance_amount.value || 0),
           water_bill: Number(f.water_bill.value || 0),
           payment_done: Number(f.payment_done.value || 0),
           payment_date: f.payment_date.value,
         };
-        if (!payload.flat_no || !payload.period_month || !payload.payment_date)
-          return alertBox("#txn-alert", "Please enter flat number, month and date of payment.");
+        if (!payload.flat_no || !payload.payment_date)
+          return alertBox("#txn-alert", "Please enter flat number and date of payment.");
         if (!(payload.maintenance_amount >= 0) || !(payload.payment_done >= 0))
           return alertBox("#txn-alert", "Please enter valid amounts.");
         try {
