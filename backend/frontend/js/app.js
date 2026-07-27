@@ -570,24 +570,22 @@
     }
     const maintDept = depts.find((d) => d.name === MAINT_DEPT_NAME);
     const opts = depts.map((d) => `<option value="${d.id}">${esc(d.name)}</option>`).join("");
-    // Month/Year dropdowns produce a reliable YYYY-MM (input type=month is not
-    // supported in Safari/older Firefox and falls back to a free-text box).
+    // Single month dropdown (e.g. "July 2026") producing a reliable YYYY-MM;
+    // input type=month is unsupported in Safari/older Firefox. Defaults to the
+    // current month. Lists 1 month ahead down to ~2 years back.
     const now = new Date();
-    const curY = now.getFullYear();
-    const curM = String(now.getMonth() + 1).padStart(2, "0");
     const monthNames = [
       "January", "February", "March", "April", "May", "June",
       "July", "August", "September", "October", "November", "December",
     ];
-    const monthOptions = monthNames
-      .map((nm, i) => {
-        const v = String(i + 1).padStart(2, "0");
-        return `<option value="${v}" ${v === curM ? "selected" : ""}>${nm}</option>`;
-      })
-      .join("");
-    let yearOptions = "";
-    for (let y = curY + 1; y >= curY - 5; y--) {
-      yearOptions += `<option value="${y}" ${y === curY ? "selected" : ""}>${y}</option>`;
+    const curYM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    let periodOptions = "";
+    for (let i = -1; i < 25; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const val = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      periodOptions += `<option value="${val}" ${
+        val === curYM ? "selected" : ""
+      }>${monthNames[d.getMonth()]} ${d.getFullYear()}</option>`;
     }
     showModal(
       "Add Transaction",
@@ -633,15 +631,9 @@
             <label class="form-label">Flat number</label>
             <input class="form-control" name="flat_no" placeholder="e.g. A-101">
           </div>
-          <div class="row g-2">
-            <div class="col-7 mb-3">
-              <label class="form-label">Month of maintenance</label>
-              <select class="form-select" name="period_month_m">${monthOptions}</select>
-            </div>
-            <div class="col-5 mb-3">
-              <label class="form-label">Year</label>
-              <select class="form-select" name="period_month_y">${yearOptions}</select>
-            </div>
+          <div class="mb-3">
+            <label class="form-label">Month of maintenance</label>
+            <select class="form-select" name="period_month">${periodOptions}</select>
           </div>
           <div class="row g-2">
             <div class="col-6 mb-3">
@@ -712,7 +704,7 @@
         const payload = {
           department_id: Number(f.department_id.value),
           flat_no: f.flat_no.value.trim(),
-          period_month: `${f.period_month_y.value}-${f.period_month_m.value}`,
+          period_month: f.period_month.value,
           maintenance_amount: Number(f.maintenance_amount.value || 0),
           water_bill: Number(f.water_bill.value || 0),
           payment_done: Number(f.payment_done.value || 0),
